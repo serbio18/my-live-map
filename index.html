@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Personal Live Map</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: white; }
+        
+        /* Sidebar Styles */
+        #sidebar { width: 380px; display: flex; flex-direction: column; border-right: 1px solid #333; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.5); }
+        #sidebar-header { padding: 20px; background: #222; border-bottom: 1px solid #333; }
+        #feed { flex-grow: 1; overflow-y: auto; background: #1a1a1a; }
+        
+        /* News Card Styles */
+        .news-card { padding: 15px; border-bottom: 1px solid #2a2a2a; cursor: pointer; transition: 0.2s; }
+        .news-card:hover { background: #252525; }
+        .news-card .date { font-size: 0.75rem; color: #888; margin-bottom: 5px; display: block; }
+        .news-card .text { font-size: 0.95rem; line-height: 1.4; }
+
+        /* Map Styles */
+        #map { flex-grow: 1; height: 100%; }
+
+        /* Custom Popup Style */
+        .leaflet-popup-content-wrapper { background: #222; color: #fff; border-radius: 4px; }
+        .leaflet-popup-tip { background: #222; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div id="sidebar-header">
+            <h2 style="margin:0; font-size: 1.5rem;">Live Updates</h2>
+            <p style="margin:5px 0 0; font-size: 0.8rem; color: #aaa;">Scraped from Telegram</p>
+        </div>
+        <div id="feed">
+            </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // 1. Initialize the Map (Centered on Ukraine as an example)
+        var map = L.map('map').setView([48.37, 31.16], 6);
+
+        // 2. Add Dark Mode Tiles (Free from CartoDB)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        // 3. Function to load and display data
+        async function loadData() {
+            try {
+                // This fetches your data.json file
+                const response = await fetch('data.json');
+                const data = await response.json();
+                const feed = document.getElementById('feed');
+
+                data.features.forEach(feature => {
+                    const coords = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
+                    const message = feature.properties.text;
+                    const date = feature.properties.date || "Just now";
+
+                    // Add Marker to Map
+                    const marker = L.marker(coords).addTo(map);
+                    marker.bindPopup(`<b>Update:</b><br>${message}`);
+
+                    // Add Card to Sidebar
+                    const card = document.createElement('div');
+                    card.className = 'news-card';
+                    card.innerHTML = `
+                        <span class="date">${date}</span>
+                        <div class="text">${message}</div>
+                    `;
+
+                    // Click card to fly to location
+                    card.onclick = () => {
+                        map.flyTo(coords, 10);
+                        marker.openPopup();
+                    };
+
+                    feed.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error loading data.json. Make sure the file exists!", error);
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
