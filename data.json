@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [36.23, 49.99] },
+      "properties": { "text": "Explosion reported in Kharkiv", "date": "2024-05-20 14:30" }
+    }
+  ]
+}
